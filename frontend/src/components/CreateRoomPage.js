@@ -1,7 +1,4 @@
 import React from "react";
-import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
 import {
   Radio,
   RadioGroup,
@@ -9,13 +6,27 @@ import {
   FormHelperText,
   TextField,
   FormControlLabel,
-} from "@material-ui/core";
+  Typography,
+  Button,
+  Grid,
+} from "@mui/material";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
-export default function CreateRoomPage({ props }) {
-  const [guestCanPause, setGuestCanPause] = useState(true);
-  const [votesToSkip, setVotesToSkip] = useState(2);
+export default function CreateRoomPage(props) {
+  const defaultProps = {
+    votesToSkip: 2,
+    guestCanPause: true,
+    update: false,
+    roomCode: null,
+    updateCallback: () => {},
+  };
+  const [guestCanPause, setGuestCanPause] = useState(
+    props.guestCanPause || defaultProps.guestCanPause
+  );
+  const [votesToSkip, setVotesToSkip] = useState(
+    props.votesToSkip || defaultProps.votesToSkip
+  );
 
   const handleVotesChange = (e) => {
     setVotesToSkip(Number(e.target.value));
@@ -25,7 +36,7 @@ export default function CreateRoomPage({ props }) {
     setGuestCanPause(e.target.value === "true" ? true : false);
   };
 
-  const handleRoomButtonPressed = async () => {
+  const handleCreateButtonPressed = async () => {
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -41,11 +52,34 @@ export default function CreateRoomPage({ props }) {
         window.location.href = "/room/" + data.code;
       });
   };
+
+  const handleUpdateButtonPressed = async () => {
+    const requestOptions = {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        votes_to_skip: votesToSkip,
+        guest_can_pause: guestCanPause,
+        code: props.roomCode,
+      }),
+    };
+    const response = await fetch("/api/update-room/", requestOptions);
+    if (response.ok) {
+      props.setSuccessMsg(true);
+      console.log("Room updated successfully");
+      props.updateCallback();
+    } else {
+      props.setErrorMsg(true);
+    }
+  };
+
+  const title =
+    props?.update || defaultProps.update ? "Update Room" : "Create A Room";
   return (
     <Grid container spacing={3}>
       <Grid item xs={12} align="center">
         <Typography component="h4" variant="h4">
-          Create A Room
+          {title}
         </Typography>
       </Grid>
       <Grid item xs={12} align="center">
@@ -55,7 +89,9 @@ export default function CreateRoomPage({ props }) {
           </FormHelperText>
           <RadioGroup
             row
-            defaultValue="true"
+            defaultValue={
+              props.guestCanPause?.toString() || defaultProps.guestCanPause
+            }
             onChange={handleGuestCanPauseChange}
           >
             <FormControlLabel
@@ -81,6 +117,7 @@ export default function CreateRoomPage({ props }) {
             variant="outlined"
             onChange={handleVotesChange}
             value={votesToSkip}
+            defaultValue={votesToSkip}
             inputProps={{
               min: 1,
               style: { textAlign: "center" },
@@ -95,16 +132,20 @@ export default function CreateRoomPage({ props }) {
         <Button
           color="secondary"
           variant="contained"
-          onClick={handleRoomButtonPressed}
+          onClick={
+            props.update ? handleUpdateButtonPressed : handleCreateButtonPressed
+          }
         >
-          Create A Room
+          {props.update ? "Update Room" : "Create A Room"}
         </Button>
       </Grid>
-      <Grid item xs={12} align="center">
-        <Button color="primary" variant="contained" to="/" component={Link}>
-          Back
-        </Button>
-      </Grid>
+      {!props.update && (
+        <Grid item xs={12} align="center">
+          <Button color="primary" variant="contained" to="/" component={Link}>
+            Back
+          </Button>
+        </Grid>
+      )}
     </Grid>
   );
 }

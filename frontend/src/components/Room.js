@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import CircularProgress from "@material-ui/core/CircularProgress";
-import { Grid, Button, Typography } from "@material-ui/core";
+import {
+  Grid,
+  Button,
+  Typography,
+  Collapse,
+  Alert,
+  CircularProgress,
+} from "@mui/material";
 import CreateRoomPage from "./CreateRoomPage";
 
 export default function Room({ leaveRoomCallback }) {
@@ -10,6 +16,8 @@ export default function Room({ leaveRoomCallback }) {
   const [isHost, setIsHost] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [successMsg, setSuccessMsg] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(false);
   const roomCode = useParams().roomCode;
   const getRoomDetails = async () => {
     try {
@@ -65,18 +73,44 @@ export default function Room({ leaveRoomCallback }) {
     return (
       <Grid container spacing={1}>
         <Grid item xs={12} align="center">
+          {console.log(successMsg)}
+          <Collapse in={successMsg || errorMsg}>
+            {successMsg ? (
+              <Alert
+                onClose={() => {
+                  setSuccessMsg(false);
+                }}
+                severity="success"
+              >
+                Room updated successfully
+              </Alert>
+            ) : (
+              <Alert
+                severity="error"
+                onClose={() => {
+                  setErrorMsg(false);
+                }}
+              >
+                Error updating room
+              </Alert>
+            )}
+          </Collapse>
+        </Grid>
+        <Grid item xs={12} align="center">
           <CreateRoomPage
             update={true}
             votesToSkip={votesToSkip}
             guestCanPause={guestCanPause}
             roomCode={roomCode}
-            updateCallback={() => {}}
+            updateCallback={getRoomDetails}
+            setErrorMsg={setErrorMsg}
+            setSuccessMsg={setSuccessMsg}
           />
         </Grid>
         <Grid item xs={12} align="center">
           <Button
             variant="contained"
-            color="secondary"
+            color="primary"
             onClick={() => updateShowSettings(false)}
           >
             Close
