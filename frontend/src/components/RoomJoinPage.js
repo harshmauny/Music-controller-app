@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Grid, Typography, TextField } from "@material-ui/core";
+import { Button, Grid, Typography, TextField } from "@mui/material";
 
 export default function RoomJoinPage() {
   const [roomCode, setRoomCode] = useState("");
@@ -8,31 +8,31 @@ export default function RoomJoinPage() {
 
   const handleTextFieldChange = (e) => {
     setRoomCode(e.target.value);
-  }
+  };
 
   const joinRoom = async () => {
     const requestOptions = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: roomCode,
-        }),
-      };
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: roomCode,
+      }),
+    };
     try {
-        const response = await fetch("/api/join-room/", requestOptions);
-        if (response.ok) {
-          window.location.href = "/room/" + roomCode;
-        } else {
-          setError("Room not found.");
-        }
-      } catch (error) {
-        console.log(error);
+      const response = await fetch("/api/join-room/", requestOptions);
+      if (response.ok) {
+        window.location.href = "/room/" + roomCode;
+      } else {
+        setError("Room not found.");
       }
+    } catch (error) {
+      console.log(error);
     }
+  };
 
   const handleEnterRoom = () => {
     joinRoom();
-  }
+  };
 
   return (
     <div>
