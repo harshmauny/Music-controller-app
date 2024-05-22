@@ -18,7 +18,13 @@ export default function Room({ leaveRoomCallback }) {
   const [loading, setLoading] = useState(true);
   const [successMsg, setSuccessMsg] = useState(false);
   const [errorMsg, setErrorMsg] = useState(false);
+  const [spotifyAuthenticated, setSpotifyAuthenticated] = useState(false);
   const roomCode = useParams().roomCode;
+
+  useEffect(() => {
+    getRoomDetails();
+  }, []);
+
   const getRoomDetails = async () => {
     try {
       const response = await fetch(`/api/get-room?code=${roomCode}`);
@@ -30,6 +36,9 @@ export default function Room({ leaveRoomCallback }) {
       setVotesToSkip(data.votes_to_skip);
       setGuestCanPause(data.guest_can_pause);
       setIsHost(data.is_host);
+      if (data.is_host) {
+        authenticateSpotify();
+      }
     } catch (error) {
       console.log(error);
     } finally {
@@ -37,9 +46,20 @@ export default function Room({ leaveRoomCallback }) {
     }
   };
 
-  useEffect(() => {
-    getRoomDetails();
-  }, []);
+  const authenticateSpotify = async () => {
+    const response = await fetch("/spotify/is-authenticated/");
+    const data = await response.json();
+    setSpotifyAuthenticated(data.status);
+    if (!data.status) {
+      const requestOptions = {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      };
+      const response = await fetch("/spotify/get-auth-url/", requestOptions);
+      const json_resposne = await response.json();
+      window.location.replace(json_resposne.url);
+    }
+  };
 
   const handleRoomLeave = async () => {
     const requestOptions = {
