@@ -7,13 +7,14 @@ from .credential import CLIENT_ID, CLIENT_SECRET, BASE_URL
 def get_user_tokens(session_id):
     user_tokens = spotifyToken.objects.filter(user=session_id)
     if user_tokens.exists():
+        print(user_tokens[0].expires_in)
         return user_tokens[0]
     else:
         return None
 
 def update_or_create_user_tokens(session_id, access_token, token_type, expires_in, refresh_token):
     tokens = get_user_tokens(session_id)
-    expires_in = timezone.now() + timedelta(seconds=expires_in)    
+    expires_in = timezone.now() + timedelta(seconds=(expires_in or 0))    
     if tokens:
         tokens.access_token = access_token
         tokens.token_type = token_type
@@ -29,6 +30,7 @@ def is_spotify_authenticated(session_id):
     print(tokens)
     if tokens:
         expiry = tokens.expires_in
+        print(tokens.expires_in)
         if expiry <= timezone.now():
             refresh_spotify_token(session_id)
         return True
@@ -42,6 +44,7 @@ def refresh_spotify_token(session_id):
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET
     }).json()
+    print
     access_token = response.get('access_token')
     token_type = response.get('token_type')
     expires_in = response.get('expires_in')
@@ -49,6 +52,7 @@ def refresh_spotify_token(session_id):
     update_or_create_user_tokens(session_id, access_token, token_type, expires_in, refresh_token)
 
 def execute_spotify_api_request(session_id, endpoint, post_=False, put_=False):
+    print(session_id, endpoint, post_, put_)
     tokens = get_user_tokens(session_id)
     headers = {'Content-Type': 'application/json',
                'Authorization': "Bearer " + tokens.access_token}
@@ -56,7 +60,8 @@ def execute_spotify_api_request(session_id, endpoint, post_=False, put_=False):
     if post_:
         post(BASE_URL + endpoint, headers=headers)
     if put_:
-        put(BASE_URL + endpoint, headers=headers)
+        putResponse = put(BASE_URL + endpoint, headers=headers)
+        print("PUT Response",putResponse)
 
     response = get(BASE_URL + endpoint, {}, headers=headers)
     

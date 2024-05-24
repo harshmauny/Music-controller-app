@@ -9,6 +9,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import CreateRoomPage from "./CreateRoomPage";
+import MusicPlayer from "./MusicPlayer";
 
 export default function Room({ leaveRoomCallback }) {
   const [votesToSkip, setVotesToSkip] = useState(2);
@@ -19,10 +20,18 @@ export default function Room({ leaveRoomCallback }) {
   const [successMsg, setSuccessMsg] = useState(false);
   const [errorMsg, setErrorMsg] = useState(false);
   const [spotifyAuthenticated, setSpotifyAuthenticated] = useState(false);
+  const [song, setSong] = useState({});
   const roomCode = useParams().roomCode;
 
   useEffect(() => {
     getRoomDetails();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      getCurrentSong();
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const getRoomDetails = async () => {
@@ -58,6 +67,19 @@ export default function Room({ leaveRoomCallback }) {
       const response = await fetch("/spotify/get-auth-url/", requestOptions);
       const json_resposne = await response.json();
       window.location.replace(json_resposne.url);
+    }
+  };
+
+  const getCurrentSong = async () => {
+    try {
+      const response = await fetch("/spotify/current-song/");
+      if (response.ok) {
+        const data = await response.json();
+        setSong(data);
+        console.log(data);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -151,21 +173,7 @@ export default function Room({ leaveRoomCallback }) {
           Code: {roomCode}
         </Typography>
       </Grid>
-      <Grid item xs={12} align="center">
-        <Typography variant="h6" compact="h6">
-          Votes: {votesToSkip}
-        </Typography>
-      </Grid>
-      <Grid item xs={12} align="center">
-        <Typography variant="h6" compact="h6">
-          Guest Can Pause: {guestCanPause.toString()}
-        </Typography>
-      </Grid>
-      <Grid item xs={12} align="center">
-        <Typography variant="h6" compact="h6">
-          Host: {isHost.toString()}
-        </Typography>
-      </Grid>
+      <MusicPlayer {...song} />
       {isHost ? <SettingsButton /> : null}
       <Grid item xs={12} align="center">
         <Button variant="contained" color="secondary" onClick={handleRoomLeave}>
